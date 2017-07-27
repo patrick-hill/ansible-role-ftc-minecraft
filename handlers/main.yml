@@ -1,0 +1,8 @@
+---
+# handlers file for ansible-role-ftc-minecraft
+
+- name: mcmyadmin_start
+  service:
+    name: mcmyadmin
+    state: started
+  become: true

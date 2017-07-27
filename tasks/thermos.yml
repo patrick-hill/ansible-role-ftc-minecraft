@@ -1,0 +1,61 @@
+---
+
+- name: Create dirs 
+  file:
+    path: "{{ ftb_archive_dir }}/thermos"
+    owner: "{{ ftb_user }}"
+    group: "{{ ftb_group }}"
+    recurse: yes
+    state: directory
+  become: true
+
+- name: Copy Local Thermos files
+  copy:
+    src: "{{ playbook_dir }}/files/{{ item }}"
+    dest: "{{ ftb_archive_dir }}/thermos/{{ item }}"
+    owner: "{{ ftb_user }}"
+    group: "{{ ftb_group }}"
+    remote_src: false
+  with_items:
+    - "{{ thermos_installer_filename }}"
+    - "{{ thermos_lib_filename }}"
+  when: not thermos_download
+
+- name: Download Thermos files
+  get_url:
+    url:  "{{ item }}"
+    dest: "{{ ftb_archive_dir }}/thermos/"
+    owner: "{{ ftb_user }}"
+    group: "{{ ftb_group }}"
+    validate_certs: false
+  with_items:
+    - "{{ thermos_installer_url }}"
+    - "{{ thermos_lib_url }}"
+  when: thermos_download
+
+- name: Remove FTB Servers bin & libraries dirs
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ ftb_install_dir }}/bin"
+    - "{{ ftb_install_dir }}/libraries"
+
+- name: Copy Thermos jar to FTB Server
+  copy:
+    src: "{{ ftb_archive_dir }}/thermos/{{ thermos_installer_filename }}"
+    dest: "{{ ftb_install_dir }}"
+    owner: "{{ ftb_user }}"
+    group: "{{ ftb_group }}"
+    remote_src: true
+
+- name: Extract libraries archive
+  unarchive:
+    src:  "{{ ftb_archive_dir }}/thermos/{{ thermos_lib_filename }}"
+    dest: "{{ ftb_install_dir }}"
+    owner: "{{ ftb_user }}"
+    group: "{{ ftb_group }}"
+    remote_src: true
+
+- name: Rename Thermos jar to ftbserver.jar for McMyAdmin
+  command: "mv {{ ftb_install_dir }}/Thermos-1.7.10-{{ thermos_version }}-server.jar ftbserver.jar"

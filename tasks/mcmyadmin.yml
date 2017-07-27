@@ -1,0 +1,118 @@
+---
+
+- name: Create dirs 
+  file:
+    path: "{{ item }}"
+    owner: "{{ ftb_user }}"
+    group: "{{ ftb_group }}"
+    recurse: yes
+    state: directory
+  with_items:
+    - "{{ ftb_archive_dir}}/McMyAdmin"
+    - "{{ mcmyadmin_install_dir }}"
+  become: true
+
+- name: Copy Local McMyAdmin files
+  copy:
+    src:  "{{ playbook_dir }}/files/{{ item }}"
+    dest: "{{ ftb_archive_dir}}/McMyAdmin/"
+    owner: "{{ ftb_user }}"
+    group: "{{ ftb_group }}"
+    remote_src: false
+  with_items:
+    - "{{ mcmyadmin_installer_filename }}"
+    - "{{ mcmyadmin_etc_filename }}"
+  when: not mcmyadmin_download
+
+- name: Download McMyAdmin
+  get_url:
+    url:  "{{ item }}"
+    dest: "{{ ftb_archive_dir}}/McMyAdmin/"
+    owner: "{{ ftb_user }}"
+    group: "{{ ftb_group }}"
+    validate_certs: false
+  with_items:
+    - "{{ mcmyadmin_etc_url }}"
+    - "{{ mcmyadmin_installer_url }}"
+  when: mcmyadmin_download
+
+- name: Extract etc.zip to /usr/local
+  unarchive:
+    src: "{{ ftb_archive_dir }}/McMyAdmin/{{ mcmyadmin_etc_filename }}"
+    dest: /usr/local
+    remote_src: true
+  
+- name: Extract McMyAdmin
+  unarchive:
+    src:  "{{ ftb_archive_dir }}/McMyAdmin/{{ mcmyadmin_installer_filename }}"
+    dest: "{{ mcmyadmin_install_dir }}"
+    owner: "{{ ftb_user }}"
+    group: "{{ ftb_group }}"
+    remote_src: true
+  become: true
+
+# - name: Configure McMyAdmin
+#   shell: |
+#     set timeout 300
+#     set force_conservative 1
+
+#     spawn /opt/minecraft/McMyAdmin/MCMA2_Linux_x86_64 -setpass "{{ mcmyadmin_admin_password }}" -configonly
+
+#     expect "Continue? \[y/n\] : "
+#     send -- "y"
+
+#     exit 0
+#   args:
+#     executable: /usr/bin/expect
+#     chdir: "{{ mcmyadmin_install_dir }}"
+#   become: true
+
+- name: Restore McMyAdmin Install
+  unarchive:
+    src:  "{{ playbook_dir}}/files/{{ mcmyadmin_restore_file }}"
+    dest: "{{ mcmyadmin_install_dir }}"
+    owner: "{{ ftb_user }}"
+    group: "{{ ftb_group }}"
+    remote_src: false
+
+- name: Configure Firewall for McMyAdmin
+  firewalld:
+    port: 8080/tcp
+    permanent: true
+    state: enabled
+  become: true
+
+- name: Symlink Logs to /var/logs/McMyAdmin
+  file:
+    src: "{{ mcmyadmin_install_dir }}/MCMA_Logs"
+    dest: /var/log/MCMA_Logs
+    owner: "{{ ftb_user }}"
+    group: "{{ ftb_group }}"
+    state: link
+  become: true
+
+- name: Remove default 'Minecraft' dir
+  file:
+    path: "{{ mcmyadmin_install_dir }}/Minecraft"
+    state: absent
+
+- name: Symlink Current Server to McMyAdmin Minecraft dir
+  file:
+    src:  "{{ ftb_install_dir }}"
+    dest: "{{ mcmyadmin_install_dir }}/Minecraft"
+    owner: "{{ ftb_user }}"
+    group: "{{ ftb_group }}"
+    state: link
+
+- name: Drop McMyAdmin Service file
+  template:
+    src: mcmyadmin.service.j2
+    dest: /etc/systemd/system/mcmyadmin.service
+  become: true
+
+- name: Enable McMyAdmin Service
+  systemd:
+    name: mcmyadmin
+    enabled: true
+  become: true
+  notify: mcmyadmin_start

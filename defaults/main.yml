@@ -1,0 +1,43 @@
+---
+# defaults file for ansible-role-ftc-minecraft
+
+# FTB: https://www.feed-the-beast.com/projects/ftb-infinity-evolved
+ftb_download_pack: true
+ftb_user: minecraft
+ftb_group: minecraft
+ftb_pack_filename: FTBInfinityServer_2.7.0.zip
+ftb_pack_url: "https://addons-origin.cursecdn.com/files/2439/376/{{ ftb_pack_filename }}"
+ftb_archive_dir: /opt/minecraft/_archives
+ftb_install_dir: "/opt/minecraft/servers/{{ ftb_pack_filename | splitext | first }}"
+
+# McMyAdmin: https://www.mcmyadmin.com/#/download
+mcmyadmin_download: true
+mcmyadmin_installer_filename: MCMA2_glibc26_2.zip
+mcmyadmin_etc_filename: etc.zip
+mcmyadmin_installer_url: "http://mcmyadmin.com/Downloads/{{ mcmyadmin_installer_filename }}"
+mcmyadmin_etc_url: "http://mcmyadmin.com/Downloads/{{ mcmyadmin_etc_filename }}"
+mcmyadmin_install_dir: /opt/minecraft/McMyAdmin
+mcmyadmin_admin_password: admin
+mcmyadmin_restore_backup: false
+mcmyadmin_restore_file: McMyAdmin-Archive.tgz
+
+# Thermos: https://cyberdynecc.github.io/Thermos/install
+# Github: https://github.com/CyberdyneCC/Thermos/releases
+thermos_download: true
+thermos_version: 1614 # 1558 or 1614
+thermos_installer_filename: "Thermos-1.7.10-{{ thermos_version }}-server.jar"
+thermos_installer_url: "https://github.com/CyberdyneCC/Thermos/releases/download/58/{{ thermos_installer_filename }}"
+thermos_lib_filename: libraries.zip
+thermos_lib_url: "https://github.com/CyberdyneCC/Thermos/releases/download/58/{{ thermos_lib_filename }}"
+
+
+
+
+
+
+
+
+
+
+
+

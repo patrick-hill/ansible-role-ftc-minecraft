@@ -1,0 +1,24 @@
+---
+
+- name: Create Group
+  group:
+    name: "{{ ftb_group }}"
+    system: no
+    state: present 
+  become: true
+
+- name: Create User
+  user:
+    name: "{{ ftb_user }}"
+    group: "{{ ftb_group }}"
+    state: present
+    system: no
+    createhome: no
+    shell: /bin/false
+  become: true
+
+- name: Configure Firewall for Minecraft
+  firewalld:
+    port: 25565/tcp
+    permanent: true
+    state: enabled

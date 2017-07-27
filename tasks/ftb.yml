@@ -1,0 +1,58 @@
+---
+
+- name: Stat FTB Install Archive
+  stat:
+    path: "{{ ftb_install_dir }}"
+  register: ftb_install_dir_exists
+
+- block:
+
+  - name: Create dirs 
+    file:
+      path: "{{ item }}"
+      owner: "{{ ftb_user }}"
+      group: "{{ ftb_group }}"
+      recurse: yes
+      state: directory
+      # mode: 0777
+    with_items:
+      - "{{ ftb_archive_dir }}/ftb"
+      - "{{ ftb_install_dir }}"
+    become: true
+
+  - name: Download FTB Pack
+    get_url:
+      url:  "{{ ftb_pack_url }}"
+      dest: "{{ ftb_archive_dir }}/ftb/{{ ftb_pack_filename }}"
+      owner: "{{ ftb_user }}"
+      group: "{{ ftb_group }}"
+      validate_certs: false
+    when: ftb_download_pack
+
+  - name: Copy Local Archive
+    copy:
+      src: "{{ playbook_dir }}/files/{{ ftb_pack_filename }}"
+      dest: "{{ ftb_archive_dir }}/ftb/{{ ftb_pack_filename }}"
+      owner: "{{ ftb_user }}"
+      group: "{{ ftb_group }}"
+      # mode: 0777
+    when: not ftb_download_pack
+
+  - name: Extract Server
+    unarchive:
+      src:  "{{ ftb_archive_dir }}/ftb/{{ ftb_pack_filename }}"
+      dest: "{{ ftb_install_dir }}"
+      owner: "{{ ftb_user }}"
+      group: "{{ ftb_group }}"
+      remote_src: true
+    become: true
+
+  - name: Set ownership on slow query log file (if configured).
+    file:
+      path: "/opt/minecraft"
+      owner: "{{ ftb_user }}"
+      group: "{{ ftb_group }}"
+      mode: 0644
+
+  when: not ftb_install_dir_exists.stat.exists
+  # End Block

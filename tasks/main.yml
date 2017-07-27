@@ -1,0 +1,15 @@
+---
+# tasks file for ansible-role-ftc-minecraft
+
+- name: Common tasks
+  include: common.yml
+
+- name: Download FTB Pack
+  include: ftb.yml
+
+- name: Thermos Setup
+  include: thermos.yml
+
+- name: McMyAdmin Setup
+  include: mcmyadmin.yml
+  
